@@ -6,9 +6,9 @@ from bot_routine import *
 from database import sendData
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 from telebot import types
+import os
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
-
 
 def check_again_button(uid):
     markup = InlineKeyboardMarkup()
@@ -68,7 +68,7 @@ def get_text_messages(message):
             if response.get("ok"):
                 bot.reply_to(message, TEXT['add_success'])
             elif response.get("link"):
-                bot.reply_to(message, TEXT['yourlink'] % response.get("link"))
+                bot.reply_to(message, TEXT['yourlink'] % (response.get("link"), umes))
             else:
                 bot.reply_to(message, TEXT['add_error'] % json.dumps(response, indent=1))
 
@@ -80,5 +80,6 @@ def get_text_messages(message):
 def my_chat_m(message: types.ChatMemberUpdated):
     if message.new_chat_member.status == "member":
         Log.log(message.chat.id)
+
 
 bot.infinity_polling()
