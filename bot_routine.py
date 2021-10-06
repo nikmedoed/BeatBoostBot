@@ -8,7 +8,7 @@ def check_membership(bot, userid):
     for id in RELATIVE_CHAT_IDS:
         try:
             if bot.get_chat_member(chat_id=id, user_id=userid).status != "left":
-                return True
+                return (id, bot.get_chat(chat_id=id).title)
         except:
             pass
     return False

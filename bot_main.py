@@ -57,14 +57,15 @@ def get_text_messages(message):
         uid = mfu.id
         uname = f'{mfu.first_name} {mfu.last_name} - @{mfu.username}'
         umes = message.text
-        if not check_membership(bot, uid):
+        membership = check_membership(bot, uid)
+        if not membership:
             check_again_button(uid)
-        elif not check_is_now_sumbmission_time():
-            bot.send_message(uid, TEXT['pausework'])
+        # elif not check_is_now_sumbmission_time():
+        #     bot.send_message(uid, TEXT['pausework'])
         elif not check_link(umes):
             bot.reply_to(message, TEXT['wrongmessage'], parse_mode="Markdown")
         else:
-            response = sendData(uid, uname, umes)
+            response = sendData(uid, uname, umes, *membership)
             if response.get("ok"):
                 bot.reply_to(message, TEXT['add_success'])
             elif response.get("link"):
