@@ -34,7 +34,7 @@ def start(message):
         if message.chat.type == 'private':
             firstCheck(message)
     except Exception as ex1:
-        Log.log("unhandled exception, send_text", str(ex1))
+        Log.log("unhandled exception, send_text", str(ex1), bot=bot)
 
 
 def validateCode(bot, uid, code):
@@ -94,7 +94,7 @@ def get_text_messages(message):
                 bot.reply_to(message, TEXT['add_error'] % json.dumps(response, indent=1))
 
     except Exception as ex1:
-        Log.log("unhandled exception, send_text", str(ex1))
+        Log.log("unhandled exception, send_text", str(ex1), bot=bot)
 
 
 @bot.my_chat_member_handler()
@@ -112,4 +112,4 @@ while 1:
         message = (f"Infinity polling exception: {str(e)}\n"
                    f"Exception traceback:\n{traceback.format_exc()}")
         sleep(1)
-        bot.send_message(ADMIN_USER_ID, message)
+        Log.log(message, bot=bot)
