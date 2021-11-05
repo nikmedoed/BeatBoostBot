@@ -3,12 +3,14 @@ import Log
 import json
 from bot_text import TEXT
 from bot_routine import *
-from database import sendData
+from database import sendData, verificateId
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 from telebot import types
-import os
+from time import sleep
+import traceback
 
 bot = telebot.TeleBot(TELEGRAM_TOKEN)
+
 
 def check_again_button(uid):
     markup = InlineKeyboardMarkup()
@@ -35,10 +37,27 @@ def start(message):
         Log.log("unhandled exception, send_text", str(ex1))
 
 
+def validateCode(bot, uid, code):
+    unique_code = code.strip()
+    if re.match(r"[\d]+:[\d]+", unique_code):
+        act = verificateId(unique_code)
+        err = act.get("error")
+        if err:
+            bot.send_message(uid, TEXT['start_chat_error'] + err)
+        elif act.get("ok"):
+            link = get_invite_to_room(bot)
+            markup = InlineKeyboardMarkup()
+            markup.add(InlineKeyboardButton(TEXT['get_invite'], url=link))
+            bot.send_message(uid, TEXT['new_room'], reply_markup=markup)
+            return True
+    return False
+
+
 def firstCheck(message):
     uid = message.from_user.id
     if not check_membership(bot, uid):
-        check_again_button(uid)
+        if not hasattr(message, 'text') or not validateCode(bot, uid, message.text):
+            check_again_button(uid)
     else:
         if check_is_now_sumbmission_time():
             bot.send_message(uid, TEXT['instruction'] % get_next_sumbmission_time())
@@ -59,7 +78,8 @@ def get_text_messages(message):
         umes = message.text
         membership = check_membership(bot, uid)
         if not membership:
-            check_again_button(uid)
+            if not validateCode(bot, uid, message.text):
+                check_again_button(uid)
         # elif not check_is_now_sumbmission_time():
         #     bot.send_message(uid, TEXT['pausework'])
         elif not check_link(umes):
@@ -83,4 +103,13 @@ def my_chat_m(message: types.ChatMemberUpdated):
         Log.log(message.chat.id)
 
 
-bot.infinity_polling()
+# bot.infinity_polling()
+
+while 1:
+    try:
+        bot.polling(none_stop=True)
+    except Exception as e:
+        message = (f"Infinity polling exception: {str(e)}\n"
+                   f"Exception traceback:\n{traceback.format_exc()}")
+        sleep(1)
+        bot.send_message(ADMIN_USER_ID, message)

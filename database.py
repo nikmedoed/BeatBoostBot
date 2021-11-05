@@ -1,6 +1,6 @@
 import requests
 import json
-from bot_settings import TARGET_SHEET_URL
+from bot_settings import TARGET_SHEET_URL, TILDA_SHEET_URL
 
 
 def sendData(uid, username, link, chatid, chattitle=""):
@@ -15,6 +15,16 @@ def sendData(uid, username, link, chatid, chattitle=""):
             }
         }
         response = requests.post(TARGET_SHEET_URL, json.dumps(data))
+        return response.json()
+    except:
+        return {"error": "Внутренняя ошибка бота"}
+
+
+
+def verificateId(id):
+    try:
+        data = {"id": id}
+        response = requests.post(TILDA_SHEET_URL, json.dumps(data))
         return response.json()
     except:
         return {"error": True}

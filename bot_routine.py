@@ -14,6 +14,16 @@ def check_membership(bot, userid):
     return False
 
 
+def get_invite_to_room(bot):
+    global RELATIVE_CHAT_IDS
+    RELATIVE_CHAT_IDS = getChatIds()
+    counts = [(i, bot.get_chat_member_count(i)) for i in RELATIVE_CHAT_IDS]
+    minchat = min(counts, key=lambda x: x[1])
+    link = bot.create_chat_invite_link(minchat[0], member_limit=1).invite_link
+    return link
+
+
+
 def check_is_now_sumbmission_time():
     now = datetime.datetime.now(tz=pytz.timezone("Europe/Moscow"))
     cycle_time = (now - START_DATE_FIRST_CYCLE) % LEN_SUM_PERIOD
@@ -32,7 +42,6 @@ def get_next_sumbmission_time():
 
 def check_link(link):
     return re.match("https://(www\.)?youtu(be\.com/watch\?v=|.be/)[0-9a-zA-Z_\-]{8,}", link) is not None
-
 
 
 if __name__ == "__main__":
