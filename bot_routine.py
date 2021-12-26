@@ -5,6 +5,8 @@ LEN_SUM_PERIOD = LEN_SUBMISSION_PERIOD + LEN_WATCHING_PERIOD
 
 
 def check_membership(bot, userid):
+    # global RELATIVE_CHAT_IDS
+    RELATIVE_CHAT_IDS = getChatIds()
     for id in RELATIVE_CHAT_IDS:
         try:
             if bot.get_chat_member(chat_id=id, user_id=userid).status != "left":
@@ -15,7 +17,7 @@ def check_membership(bot, userid):
 
 
 def get_invite_to_room(bot):
-    global RELATIVE_CHAT_IDS
+    # global RELATIVE_CHAT_IDS
     RELATIVE_CHAT_IDS = getChatIds()
     counts = [(i, bot.get_chat_member_count(i)) for i in RELATIVE_CHAT_IDS]
     minchat = min(counts, key=lambda x: x[1])
