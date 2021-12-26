@@ -1,9 +1,8 @@
 import requests
 import json
-from bot_settings import TARGET_SHEET_URL, TILDA_SHEET_URL
 
 
-def sendData(uid, username, link, chatid, chattitle=""):
+def sendData(TARGET_SHEET_URL, uid, username, link, chatid, chattitle=""):
     try:
         data = {
             "setLink": {
@@ -14,16 +13,17 @@ def sendData(uid, username, link, chatid, chattitle=""):
                 "chattitle": chattitle,
             }
         }
+        #TODO на асинхрон перевести
         response = requests.post(TARGET_SHEET_URL, json.dumps(data))
         return response.json()
     except:
         return {"error": "Внутренняя ошибка бота"}
 
 
-
-def verificateId(id):
+def verificateId(TILDA_SHEET_URL, id):
     try:
         data = {"id": id}
+        # TODO на асинхрон перевести
         response = requests.post(TILDA_SHEET_URL, json.dumps(data))
         return response.json()
     except:

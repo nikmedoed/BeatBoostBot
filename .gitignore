@@ -29,8 +29,6 @@ MANIFEST
 .idea/
 .handler-saves/
 
-bot_settings.py
-tests.py
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -143,3 +141,5 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 settings.ini
+
+tests.py
