@@ -7,18 +7,18 @@ import bot_handlers
 from bot_settings import Config
 from updatesworker import get_handled_updates_list
 
-asyncio.Semaphore(20)
-
 
 async def main(config):
     logging.basicConfig(
         level=logging.INFO,
         # format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
     )
-    storage = RedisStorage2(db=0, pool_size=20, prefix='beatboostFSM')
 
     bot = Bot(config.bot_token, parse_mode="HTML")
     bot["config"]: Config = config
+
+    storage = RedisStorage2(**config.redis)
+    await storage.set_bucket(chat=1, bucket={1: 2})
     bot["storage"] = storage
     dp = Dispatcher(bot, storage=storage)
 

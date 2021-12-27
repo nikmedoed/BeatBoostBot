@@ -4,9 +4,9 @@ import requests
 import configparser
 import json
 
-from dataclasses import dataclass, field
-from typing import List
-from database import sendData, verificateId
+from dataclasses import dataclass, field, asdict
+from typing import List, Dict, Union
+from tables import send_linkdata_to_sheet, verificate_tilda_code
 
 SETTINGS_FILE_PATH = "settings.ini"
 
@@ -25,6 +25,7 @@ class Config:
     bot_token: str
     config_file_path: str
     config_file_parser: configparser
+    redis: Dict[str, Union[int, str, None]]
     url_links_base: str = field(default_factory=str)
     url_tilda_base: str = field(default_factory=str)
     admin_users: List[int] = field(default_factory=list)
@@ -33,6 +34,14 @@ class Config:
     delta_submission: datetime.timedelta = 0
     delta_watching: datetime.timedelta = 0
     delta_sum: datetime.timedelta = 0
+
+    def config_to_html(self):
+        con_dict = asdict(self)
+        for i in ('config_file_parser', 'redis', 'config_file_path',
+                  'bot_token', 'delta_sum'):
+            del con_dict[i]
+        con_text = "\n".join([f"<code>{key} :: </code>{value}" for key, value in con_dict.items()])
+        return con_text
 
     @staticmethod
     def read(file=SETTINGS_FILE_PATH) -> 'Config':
@@ -43,7 +52,8 @@ class Config:
             bot_token=settings['BOT_TOKEN'],
             gist_link=settings['SETTINGS_GIST_LINK'],
             config_file_parser=bot_data,
-            config_file_path=file
+            config_file_path=file,
+            redis=dict(bot_data['REDIS'])
         )
         config.update()
         return config
@@ -77,11 +87,11 @@ class Config:
         self.delta_sum = self.delta_submission + self.delta_watching
         return self
 
-    def verificateId(self, user_tilda_id):
-        return verificateId(self.url_tilda_base, user_tilda_id)
+    def verificate_tilda_code(self, user_tilda_id, uid="", uname=""):
+        return verificate_tilda_code(self.url_tilda_base, user_tilda_id, uid, uname)
 
-    def sendData(self, uid, username, link, chatid, chattitle=""):
-        return sendData(self.url_links_base, uid, username, link, chatid, chattitle)
+    def send_linkdata_to_sheet(self, uid, username, link, chatid, chattitle=""):
+        return send_linkdata_to_sheet(self.url_links_base, uid, username, link, chatid, chattitle)
 
     def check_is_now_sumbmission_time(self):
         now = datetime.datetime.now(tz=pytz.timezone("Europe/Moscow"))
@@ -96,6 +106,7 @@ class Config:
             f'{"сегодня" if now.day == deadline.day else "завтра"} %d.%m.%y в %H:%M по {deadline.tzname()}'
         )
         return date
+
 
 if __name__ == '__main__':
     config = Config.read()
