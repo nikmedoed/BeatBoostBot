@@ -16,13 +16,12 @@ async def main(config):
 
     bot = Bot(config.bot_token, parse_mode="HTML")
     bot["config"]: Config = config
+    config.bot = bot
 
     storage = RedisStorage2(**config.redis)
-    await storage.set_bucket(chat=1, bucket={1: 2})
     bot["storage"] = storage
     dp = Dispatcher(bot, storage=storage)
 
-    # await register_middleware(dp)
     await bot_handlers.register(dp)
     try:
         await dp.start_polling(allowed_updates=get_handled_updates_list(dp))

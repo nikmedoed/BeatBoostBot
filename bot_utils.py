@@ -9,6 +9,7 @@ async def admin_notificate(message: types.Message, exc: Exception = None):
     try:
         user = message.from_user
         trace = exc and traceback.format_exc()
+        br = "\n"
         text = (
             f"Системное уведомление\n"
             f"Пользователь\n"
@@ -16,16 +17,12 @@ async def admin_notificate(message: types.Message, exc: Exception = None):
             f"<code>nik :: </code>@{user.username}\n"
             f"<code>Имя :: </code>{user.first_name} {user.last_name}\n"
             f"\nЧто произошло:\n"
-            f"<pre>{trace}</pre>"
-            f"\nСообщение пользователя:"
+            f"{ f'<pre>{trace}</pre>{br}Сообщение пользователя:' if exc else message.text}"
         )
-        if exc:
-            logging.error(trace)
         admins = message.bot.get("config").admin_users
         await TextBroadcaster(admins, text).run()
-        if message.content_type == types.ContentType.TEXT:
-            await TextBroadcaster(admins, message.text).run()
-        else:
+        if exc:
+            logging.error(trace)
             await MessageBroadcaster(admins, message).run()
     except:
         pass

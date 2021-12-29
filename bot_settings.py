@@ -3,9 +3,9 @@ import pytz
 import requests
 import configparser
 import json
-
+from aiogram import Bot
 from dataclasses import dataclass, field, asdict
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Set
 from tables import send_linkdata_to_sheet, verificate_tilda_code
 
 SETTINGS_FILE_PATH = "settings.ini"
@@ -15,8 +15,8 @@ def str_to_timedelta(s) -> datetime.timedelta:
     return datetime.timedelta(**json.loads(s))
 
 
-def str_to_int_list(s) -> List[int]:
-    return [int(i) for i in s.split(',')]
+def str_to_int_list(s) -> Set[int]:
+    return set(int(i) for i in s.split(','))
 
 
 @dataclass
@@ -28,20 +28,56 @@ class Config:
     redis: Dict[str, Union[int, str, None]]
     url_links_base: str = field(default_factory=str)
     url_tilda_base: str = field(default_factory=str)
-    admin_users: List[int] = field(default_factory=list)
-    active_chat_ids: List[int] = field(default_factory=list)
+    admin_users: Set[int] = field(default_factory=set)
+    active_chat_ids: Set[int] = field(default_factory=set)
     start_date: datetime.datetime = datetime.datetime.now()
     delta_submission: datetime.timedelta = 0
     delta_watching: datetime.timedelta = 0
     delta_sum: datetime.timedelta = 0
+    active_chat_names: Dict[int, str] = field(default_factory=dict)
+    active_chat_counts: Dict[int, int] = field(default_factory=dict)
+    bot: Bot = None
 
     def config_to_html(self):
-        con_dict = asdict(self)
-        for i in ('config_file_parser', 'redis', 'config_file_path',
-                  'bot_token', 'delta_sum'):
-            del con_dict[i]
-        con_text = "\n".join([f"<code>{key} :: </code>{value}" for key, value in con_dict.items()])
+        con_dict = self.__dict__
+        stop_list = ('config_file_parser', 'redis', 'config_file_path',
+                     'chat_names', 'bot_token', 'delta_sum', 'bot',
+                     'active_chat_names', 'active_chat_counts')
+        con_text = "\n".join(
+            [f"<code>{key} :: </code>{value}"
+             for key, value in con_dict.items() if key not in stop_list
+             ])
         return con_text
+
+    async def add_member(self, chat_id: int):
+        self.active_chat_counts[chat_id] = (await self.get_active_chat_count(chat_id)) + 1
+
+    async def sub_member(self, chat_id: int):
+        self.active_chat_counts[chat_id] = (await self.get_active_chat_count(chat_id)) - 1
+
+    async def get_active_chat_count(self, cid: int):
+        count = self.active_chat_counts.get(cid)
+        if not count or count < 0:
+            count = self.active_chat_counts[cid] = await self.bot.get_chat_member_count(cid)
+        return count
+
+    async def get_invite_to_room(self):
+        counts = [(i, (await self.get_active_chat_count(i))) for i in self.active_chat_ids]
+        min_chat = min(counts, key=lambda x: x[1])
+        link = await self.bot.create_chat_invite_link(min_chat[0], member_limit=1)
+        return link.invite_link
+
+    async def fill_chat_names(self):
+        if self.bot:
+            self.active_chat_names = {
+                cid: (await self.bot.get_chat(chat_id=cid)).title for cid in self.active_chat_ids
+            }
+        return self.active_chat_names
+
+    async def get_chat_name(self, chat_id):
+        if not self.active_chat_names:
+            await self.fill_chat_names()
+        return chat_id, self.active_chat_names.get(chat_id, "unavailable")
 
     @staticmethod
     def read(file=SETTINGS_FILE_PATH) -> 'Config':
@@ -85,6 +121,8 @@ class Config:
         self.delta_submission = str_to_timedelta(settings['LEN_SUBMISSION_PERIOD'])
         self.delta_watching = str_to_timedelta(settings['LEN_WATCHING_PERIOD'])
         self.delta_sum = self.delta_submission + self.delta_watching
+        self.active_chat_names = dict()
+        self.active_chat_counts = dict()
         return self
 
     def verificate_tilda_code(self, user_tilda_id, uid="", uname=""):
