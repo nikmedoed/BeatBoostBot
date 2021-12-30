@@ -41,9 +41,9 @@ async def first_check(message: types.Message, state: FSMContext):
         await check_again_button(message)
     else:
         if config.check_is_now_sumbmission_time():
-            await message.answer(TEXT['instruction'].format(config.get_next_sumbmission_time()))
+            await message.answer(TEXT['instruction'].format(config.get_next_watch_period_time()))
         else:
-            await message.answer(TEXT['pausework'])
+            await message.answer(TEXT['pausework'].format(config.get_next_watch_period_time(submission=True)))
 
 
 async def validate_code(message: types.Message):

@@ -20,12 +20,12 @@ async def admin_notificate(message: types.Message, exc: Exception = None):
             f"{ f'<pre>{trace}</pre>{br}Сообщение пользователя:' if exc else message.text}"
         )
         admins = message.bot.get("config").admin_users
-        await TextBroadcaster(admins, text).run()
+        await TextBroadcaster(list(admins), text).run()
         if exc:
             logging.error(trace)
             await MessageBroadcaster(admins, message).run()
-    except:
-        pass
+    except Exception as e:
+        logging.error(f"{e}")
 # con_text = f"{message.text}\n\n{TEXT['settings_update']}"
 # for key, value in con_dict.items():
 #     message.entities.append(types.MessageEntity("code", len(con_text), len(key) + 4))

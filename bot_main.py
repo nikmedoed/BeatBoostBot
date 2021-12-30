@@ -10,8 +10,7 @@ from updatesworker import get_handled_updates_list
 
 async def main(config):
     logging.basicConfig(
-        level=logging.INFO,
-        # format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
+        level=logging.INFO,  # format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
     )
 
     bot = Bot(config.bot_token, parse_mode="HTML")
@@ -29,18 +28,6 @@ async def main(config):
         await dp.storage.close()
         await dp.storage.wait_closed()
         await bot.session.close()
-
-
-#  периодические задачи можно делать так
-#     dp.loop.create_task(periodic())
-# Now periodic can be formulated as in your initial attempt:
-# async def periodic(sleep_for, queue):
-#     while True:
-#         await asyncio.sleep(sleep_for)
-#         now = datetime.utcnow()
-#         for id in chat_ids:
-#             await bot.send_message(id, f"{now}",
-#                                    disable_notification=True)
 
 
 if __name__ == '__main__':

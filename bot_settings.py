@@ -15,7 +15,7 @@ def str_to_timedelta(s) -> datetime.timedelta:
     return datetime.timedelta(**json.loads(s))
 
 
-def str_to_int_list(s) -> Set[int]:
+def str_to_int_set(s) -> Set[int]:
     return set(int(i) for i in s.split(','))
 
 
@@ -112,8 +112,8 @@ class Config:
 
         self.url_links_base: str = settings['LINKS_SHEET']
         self.url_tilda_base: str = settings['TILDA_SHEET']
-        self.admin_users: List[int] = str_to_int_list(settings['ADMIN_USERS_ID'])
-        self.active_chat_ids: List[int] = str_to_int_list(settings['RELATIVE_CHAT_IDS'])
+        self.admin_users = str_to_int_set(settings['ADMIN_USERS_ID'])
+        self.active_chat_ids = str_to_int_set(settings['RELATIVE_CHAT_IDS'])
         self.start_date: datetime.datetime = pytz.timezone('Europe/Moscow').localize(
             datetime.datetime.strptime(settings['START_DATE_FIRST_CYCLE'], '%Y-%m-%d %H:%M:%S'),
             is_dst=None
@@ -136,10 +136,20 @@ class Config:
         cycle_time = (now - self.start_date) % self.delta_sum
         return cycle_time < self.delta_submission
 
-    def get_next_sumbmission_time(self):
+    def get_next_watch_period_time(
+            self,
+            shift: Union[datetime.timedelta, int, Dict[str, Union[str, int, bool]]] = 0,
+            submission=False
+    ):
+        if type(shift) == dict:
+            shift = shift.get('hours', 0) * 60 + shift.get('minutes', 0)
+        if type(shift) == int:
+            shift = datetime.timedelta(minutes=shift)
         now = datetime.datetime.now(tz=pytz.timezone("Europe/Moscow"))
         diff = now - self.start_date
-        deadline = self.start_date + self.delta_sum * (diff // self.delta_sum) + self.delta_submission
+        deadline = self.start_date + \
+                   self.delta_sum * (diff // self.delta_sum) + shift + \
+                   (self.delta_sum if submission else self.delta_submission)
         date = deadline.strftime(
             f'{"сегодня" if now.day == deadline.day else "завтра"} %d.%m.%y в %H:%M по {deadline.tzname()}'
         )

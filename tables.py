@@ -1,22 +1,31 @@
 import aiohttp
+import asyncio
+
+LINKS_SEMAPHORE = asyncio.Semaphore(value=1)
 
 
 async def send_linkdata_to_sheet(TARGET_SHEET_URL, uid, username, link, chatid, chattitle=""):
-    try:
-        data = {
-            "setLink": {
-                "userid": uid,
-                "nikname": username,
-                "link": link,
-                "chatid": chatid,
-                "chattitle": chattitle,
+    errors = 0
+    while 1:
+        errors += 1
+        try:
+            data = {
+                "setLink": {
+                    "userid": uid,
+                    "nikname": username,
+                    "link": link,
+                    "chatid": chatid,
+                    "chattitle": chattitle,
+                }
             }
-        }
-        async with aiohttp.ClientSession() as session:
-            async with session.post(TARGET_SHEET_URL, json=data) as resp:  # [1]
-                return await resp.json()
-    except:
-        return {"error": "Внутренняя ошибка бота"}
+            async with LINKS_SEMAPHORE:
+                async with aiohttp.ClientSession() as session:
+                    async with session.post(TARGET_SHEET_URL, json=data) as resp:  # [1]
+                        return await resp.json()
+        except:
+            if errors > 5:
+                return {"error": "Внутренняя ошибка бота"}
+            await asyncio.sleep(5)
 
 
 async def verificate_tilda_code(TILDA_SHEET_URL, code, uid="", uname=""):
