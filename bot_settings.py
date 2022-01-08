@@ -1,12 +1,16 @@
 import datetime
+import logging
+
 import pytz
 import requests
 import configparser
 import json
 from aiogram import Bot
+from aiogram.utils.exceptions import ChatNotFound
 from dataclasses import dataclass, field, asdict
 from typing import List, Dict, Union, Set
 from tables import send_linkdata_to_sheet, verificate_tilda_code
+from bot_utils import admin_broadcast
 
 SETTINGS_FILE_PATH = "settings.ini"
 
@@ -58,7 +62,13 @@ class Config:
     async def get_active_chat_count(self, cid: int):
         count = self.active_chat_counts.get(cid)
         if not count or count < 0:
-            count = self.active_chat_counts[cid] = await self.bot.get_chat_member_count(cid)
+            try:
+                count = self.active_chat_counts[cid] = await self.bot.get_chat_member_count(cid)
+            except ChatNotFound:
+                await admin_broadcast(
+                    self.bot,
+                    f"Чат/канал с id {cid} в списке, но бот не имеет к нему доступа"
+                )
         return count
 
     async def get_invite_to_room(self):
@@ -69,9 +79,14 @@ class Config:
 
     async def fill_chat_names(self):
         if self.bot:
-            self.active_chat_names = {
-                cid: (await self.bot.get_chat(chat_id=cid)).title for cid in self.active_chat_ids
-            }
+            for cid in self.active_chat_ids:
+                try:
+                    self.active_chat_names[cid] = (await self.bot.get_chat(chat_id=cid)).title
+                except ChatNotFound:
+                    await admin_broadcast(
+                        self.bot,
+                        f"Чат/канал с id {cid} в списке, но бот не имеет к нему доступа"
+                    )
         return self.active_chat_names
 
     async def get_chat_name(self, chat_id):

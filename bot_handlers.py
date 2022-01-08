@@ -3,7 +3,7 @@ from aiogram.utils.exceptions import TelegramAPIError, MessageNotModified, CantP
 from aiogram.types import BotCommand, bot_command_scope
 import logging
 import json
-from bot_utils import admin_notificate, check_link
+from bot_utils import admin_notificate, check_link, admin_broadcast
 from bot_routine import *
 from bot_text import *
 

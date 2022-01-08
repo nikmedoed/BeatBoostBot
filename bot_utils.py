@@ -5,6 +5,14 @@ from aiogram import types, filters, Bot, Dispatcher
 import re
 
 
+async def admin_broadcast(bot: Bot,text: str):
+    try:
+        logging.info(text)
+        admins = bot.get("config").admin_users
+        await TextBroadcaster(list(admins), text).run()
+    except Exception as e:
+        logging.error(f"{e}")
+
 async def admin_notificate(message: types.Message, exc: Exception = None):
     try:
         user = message.from_user
