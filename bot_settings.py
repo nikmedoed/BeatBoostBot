@@ -1,6 +1,6 @@
 import datetime
 import logging
-
+import os
 import pytz
 import requests
 import configparser
@@ -99,12 +99,18 @@ class Config:
         bot_data = configparser.ConfigParser()
         bot_data.read(file)
         settings = bot_data['SETTINGS']
+        redis_from_env = {}
+        redis_env = os.environ.get("REDIS_URL")
+        if redis_env:
+            red_list = redis_env.split(":")
+            host_list = red_list[2].split("@")
+            redis_from_env = {"host": host_list[1], "port": int(red_list[3]), "password": host_list[0]}
         config: Config = Config(
             bot_token=settings['BOT_TOKEN'],
             gist_link=settings['SETTINGS_GIST_LINK'],
             config_file_parser=bot_data,
             config_file_path=file,
-            redis=dict(bot_data['REDIS'])
+            redis={**dict(bot_data['REDIS']), **redis_from_env}
         )
         config.update()
         return config
@@ -151,6 +157,7 @@ class Config:
         cycle_time = (now - self.start_date) % self.delta_sum
         return cycle_time < self.delta_submission
 
+    # todo часы тоже брать из таблицы, а не из общей даты мб?
     def get_next_watch_period_time(
             self,
             shift: Union[datetime.timedelta, int, Dict[str, Union[str, int, bool]]] = 0,
