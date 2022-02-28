@@ -3,7 +3,7 @@ from aiogram.utils.exceptions import TelegramAPIError, MessageNotModified, CantP
 from aiogram.types import BotCommand, bot_command_scope
 import logging
 import json
-from bot_utils import admin_notificate, check_link, admin_broadcast
+from bot_utils import admin_notificate, check_link, check_link_old
 from bot_routine import *
 from bot_text import *
 
@@ -60,6 +60,8 @@ async def text_messages_member(message: types.Message, state: FSMContext):
         umes = message.text
         if not config.check_is_now_sumbmission_time():
             await message.answer(TEXT['pausework'].format(config.get_next_watch_period_time(submission=True)))
+        elif check_link_old(umes):
+            await message.reply(TEXT['wrongmessage_oldlink'])
         elif not check_link(umes):
             await message.reply(TEXT['wrongmessage'], parse_mode="Markdown")
         else:

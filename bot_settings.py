@@ -163,15 +163,15 @@ class Config:
             shift: Union[datetime.timedelta, int, Dict[str, Union[str, int, bool]]] = 0,
             submission=False
     ):
-        if type(shift) == dict:
-            shift = shift.get('hours', 0) * 60 + shift.get('minutes', 0)
-        if type(shift) == int:
-            shift = datetime.timedelta(minutes=shift)
+        # if type(shift) == dict:
+        #     shift = shift.get('hours', 0) * 60 + shift.get('minutes', 0)
+        # if type(shift) == int:
+        #     shift = datetime.timedelta(minutes=shift)
         now = datetime.datetime.now(tz=pytz.timezone("Europe/Moscow"))
         diff = now - self.start_date
         deadline = self.start_date + \
-                   self.delta_sum * (diff // self.delta_sum) + shift + \
-                   (self.delta_sum if submission else self.delta_submission)
+                   self.delta_sum * (diff // self.delta_sum) + \
+                   (self.delta_sum if submission else self.delta_submission) # + shift
         date = deadline.strftime(
             f'{"сегодня" if now.day == deadline.day else "завтра"} %d.%m.%y в %H:%M по {deadline.tzname()}'
         )

@@ -40,5 +40,8 @@ async def admin_notificate(message: types.Message, exc: Exception = None):
 #     con_text += f"\n{key} :: {value}"
 # message.text = con_text
 
-def check_link(link):
+def check_link_old(link):
     return re.match("https://(www\.)?youtu(be\.com/watch\?v=|.be/)[0-9a-zA-Z_\-]{8,}", link) is not None
+
+def check_link(link):
+    return re.match("https://www\.youtube\.com/results\?search_query=", link) is not None
